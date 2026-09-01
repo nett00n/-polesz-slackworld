@@ -1,0 +1,177 @@
+# Slackworld Plymouth theme
+# Script plugin; no desktop environment or KDE dependencies.
+
+Window.SetBackgroundTopColor(0.161, 0.310, 0.459);
+Window.SetBackgroundBottomColor(0.161, 0.310, 0.459);
+
+screen.w = Window.GetWidth();
+screen.h = Window.GetHeight();
+state = "normal";
+
+# Background (optimized for a 16:9 display).
+background.original = Image("slackworld.png");
+background.image = background.original.Scale(screen.w, screen.h);
+background.sprite = Sprite(background.image);
+background.sprite.SetPosition(0, 0, -100);
+
+# Left-side boot status, matching the GRUB and SDDM themes.
+title.image = Image("title.png");
+title.sprite = Sprite(title.image);
+title.x = screen.w * 0.075;
+title.y = screen.h * 0.67;
+title.sprite.SetPosition(title.x, title.y, 10);
+
+track.image = Image("progress-track.png");
+track.sprite = Sprite(track.image);
+track.x = title.x;
+track.y = title.y + title.image.GetHeight() + 24;
+track.sprite.SetPosition(track.x, track.y, 10);
+
+bar.original = Image("progress-fill.png");
+bar.sprite = Sprite();
+bar.x = track.x + 2;
+bar.y = track.y + 2;
+bar.sprite.SetPosition(bar.x, bar.y, 11);
+
+# Calm indeterminate indicator: a short light segment glides from side to
+# side.  Plymouth normally refreshes at about 50 FPS; 300 frames therefore
+# make one complete, unhurried six-second round trip.
+bar.segment_width = Math.Int(bar.original.GetWidth() * 0.28);
+bar.image = bar.original.Scale(bar.segment_width, bar.original.GetHeight());
+bar.sprite.SetImage(bar.image);
+bar.travel = bar.original.GetWidth() - bar.segment_width;
+bar.phase = 0;
+
+message.sprite = Sprite();
+message.sprite.SetPosition(title.x, track.y + 34, 20);
+
+fun set_normal_visibility(opacity)
+{
+    title.sprite.SetOpacity(opacity);
+    track.sprite.SetOpacity(opacity);
+    bar.sprite.SetOpacity(opacity);
+    message.sprite.SetOpacity(opacity);
+}
+
+fun progress_callback(duration, progress)
+{
+    # Keep this callback registered so Plymouth can report boot progress.
+    # The visual indicator is intentionally time-based and remains animated
+    # when no meaningful percentage is available (especially on shutdown).
+    global.bar.reported_progress = progress;
+}
+
+Plymouth.SetBootProgressFunction(progress_callback);
+
+fun message_callback(text)
+{
+    message.image = Image.Text(text, 0.69, 0.78, 0.85);
+    message.sprite.SetImage(message.image);
+}
+
+Plymouth.SetMessageFunction(message_callback);
+
+# Password/question dialog used by encrypted-root and interactive boot prompts.
+dialog.box.image = Image("dialog-box.png");
+dialog.box.sprite = Sprite(dialog.box.image);
+dialog.box.x = screen.w * 0.075;
+dialog.box.y = screen.h / 2 - dialog.box.image.GetHeight() / 2;
+dialog.box.sprite.SetPosition(dialog.box.x, dialog.box.y, 100);
+
+dialog.prompt.sprite = Sprite();
+dialog.prompt.sprite.SetPosition(dialog.box.x + 38, dialog.box.y + 30, 101);
+
+dialog.entry.image = Image("dialog-entry.png");
+dialog.entry.sprite = Sprite(dialog.entry.image);
+dialog.entry.x = dialog.box.x + 38;
+dialog.entry.y = dialog.box.y + 82;
+dialog.entry.sprite.SetPosition(dialog.entry.x, dialog.entry.y, 101);
+
+dialog.bullet.image = Image("bullet.png");
+
+fun dialog_opacity(opacity)
+{
+    dialog.box.sprite.SetOpacity(opacity);
+    dialog.prompt.sprite.SetOpacity(opacity);
+    dialog.entry.sprite.SetOpacity(opacity);
+    for (i = 0; dialog.bullets[i]; i++)
+        dialog.bullets[i].sprite.SetOpacity(opacity);
+}
+
+fun update_bullets(count)
+{
+    for (i = 0; dialog.bullets[i] || i < count; i++)
+    {
+        if (!dialog.bullets[i])
+        {
+            dialog.bullets[i].sprite = Sprite(dialog.bullet.image);
+            dialog.bullets[i].sprite.SetPosition(dialog.entry.x + 18 + i * 17,
+                                                  dialog.entry.y + 19, 102);
+        }
+        if (i < count && i < 27)
+            dialog.bullets[i].sprite.SetOpacity(1);
+        else
+            dialog.bullets[i].sprite.SetOpacity(0);
+    }
+}
+
+fun display_password_callback(prompt, bullets)
+{
+    global.state = "password";
+    set_normal_visibility(0);
+    dialog.prompt.image = Image.Text(prompt, 0.94, 0.97, 0.99);
+    dialog.prompt.sprite.SetImage(dialog.prompt.image);
+    dialog_opacity(1);
+    update_bullets(bullets);
+}
+
+Plymouth.SetDisplayPasswordFunction(display_password_callback);
+
+fun display_question_callback(prompt, entry)
+{
+    global.state = "question";
+    set_normal_visibility(0);
+    dialog.prompt.image = Image.Text(prompt, 0.94, 0.97, 0.99);
+    dialog.prompt.sprite.SetImage(dialog.prompt.image);
+    dialog.entry.text = Image.Text(entry, 1.0, 1.0, 1.0);
+    dialog.entry.sprite.SetImage(dialog.entry.text);
+    dialog_opacity(1);
+}
+
+Plymouth.SetDisplayQuestionFunction(display_question_callback);
+
+fun display_normal_callback()
+{
+    global.state = "normal";
+    dialog_opacity(0);
+    set_normal_visibility(1);
+}
+
+Plymouth.SetDisplayNormalFunction(display_normal_callback);
+
+fun refresh_callback()
+{
+    if (state == "normal")
+    {
+        # Cosine motion eases gently at both ends instead of bouncing sharply.
+        bar.phase += (2 * 3.14159) / 300;
+        if (bar.phase > 2 * 3.14159)
+            bar.phase -= 2 * 3.14159;
+        position = (1 - Math.Cos(bar.phase)) / 2;
+        bar.sprite.SetX(bar.x + Math.Int(bar.travel * position));
+    }
+
+    # Keep coordinates correct if Plymouth changes video mode during startup.
+    if (Window.GetWidth() != screen.w || Window.GetHeight() != screen.h)
+    {
+        global.screen.w = Window.GetWidth();
+        global.screen.h = Window.GetHeight();
+        background.image = background.original.Scale(screen.w, screen.h);
+        background.sprite.SetImage(background.image);
+    }
+}
+
+Plymouth.SetRefreshFunction(refresh_callback);
+
+dialog_opacity(0);
+progress_callback(0, 0);

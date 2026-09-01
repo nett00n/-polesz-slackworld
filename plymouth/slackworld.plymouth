@@ -1,0 +1,8 @@
+[Plymouth Theme]
+Name=Slackworld
+Description=Slackworld graphical boot theme with ping-pong indicator
+ModuleName=script
+
+[script]
+ImageDir=/usr/share/plymouth/themes/slackworld
+ScriptFile=/usr/share/plymouth/themes/slackworld/slackworld.script

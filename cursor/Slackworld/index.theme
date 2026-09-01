@@ -1,0 +1,5 @@
+[Icon Theme]
+Name=Slackworld
+Comment=Modern Slackware cursor theme
+Example=left_ptr
+Inherits=Adwaita

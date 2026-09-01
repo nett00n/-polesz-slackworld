@@ -1,0 +1,13 @@
+[SddmGreeterTheme]
+Name=SlackWorld
+Description=Minimal Qt 6 SDDM theme for Slackware Linux
+Author=Polesz / Codex
+License=MIT
+Type=sddm-theme
+Version=1.0
+Screenshot=preview.png
+MainScript=Main.qml
+ConfigFile=theme.conf
+Theme-Id=myslackware
+Theme-API=2.0
+QtVersion=6
