@@ -14,8 +14,12 @@ background.image = background.original.Scale(screen.w, screen.h);
 background.sprite = Sprite(background.image);
 background.sprite.SetPosition(0, 0, -100);
 
-# Left-side boot status, matching the GRUB and SDDM themes.
+# Left-side status, matching the GRUB and SDDM themes.
 title.image = Image("title.png");
+if (Plymouth.GetMode() == "shutdown")
+{
+    title.image = Image("title-shutdown.png");
+}
 title.sprite = Sprite(title.image);
 title.x = screen.w * 0.075;
 title.y = screen.h * 0.67;

@@ -109,7 +109,9 @@ The directory contains the theme descriptor and script, the common Slackworld
 background, progress-track artwork, title artwork, and images used by password
 and question dialogs. The indicator moves smoothly from side to side and does
 not depend on an estimated boot percentage, so it also remains useful during
-shutdown.
+shutdown. The title follows Plymouth's current mode: `STARTING` during boot and
+`SHUTTING DOWN` in shutdown mode, which the Slackware integration uses for both
+shutdown and reboot.
 
 The selected theme must be included in the initrd. On current Slackware
 systems using `geninitrd`, select dracut in `/etc/default/geninitrd`:
